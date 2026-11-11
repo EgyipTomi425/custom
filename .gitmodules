@@ -1,4 +1,5 @@
 [submodule "gge_sdk"]
 	path = gge_sdk
 	url = git@github.com:EgyipTomi425/gge_sdk.git
+	branch = master
 	update = none

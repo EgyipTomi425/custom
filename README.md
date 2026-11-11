@@ -6,14 +6,14 @@ modules with inline initialization. No bot-core changes are required.
 
 The private `gge_sdk` is optional and uses `update = none` in `.gitmodules`.
 Public recursive clones skip it, and CMake skips it when either the SDK or its
-pinned WebSocket submodule is absent. No credentials or downloads are requested
+WebSocket submodule is absent. No credentials or downloads are requested
 by CMake. Use `-DGGE_SDK=OFF` to disable an available SDK.
 
 Authorized developers can initialize it explicitly:
 
 ```sh
-git submodule update --init --checkout gge_sdk
-git -C gge_sdk submodule update --init --recursive
+git submodule update --init --remote --checkout gge_sdk
+git -C gge_sdk submodule update --init --recursive --remote
 ```
 
 The SDK contains its own `Echter_Websockets` submodule and requires the system

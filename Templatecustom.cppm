@@ -14,6 +14,11 @@ export module custom;
 export import template1;
 #endif
 
+// Expose SDK APIs without creating clients or registering Discord commands.
+#ifdef GGE_SDK
+export import gge.sdk.controller;
+#endif
+
 // If you want like python __init__ behavior, use INLINE LAMBDA or INLINE functions here
 // Use Check the template.cppm in the submodule
 export inline const int init_custom = []

@@ -1,0 +1,60 @@
+name: Public custom integration CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: custom-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: ${{ matrix.compiler }} / CPU
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: GCC
+            cc: gcc
+            cxx: g++
+          - compiler: Clang
+            cc: clang
+            cxx: clang++
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - name: Checkout public host
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EgyipTomi425/EchterWachter
+          path: host
+          persist-credentials: false
+      - name: Initialize public utility dependency
+        run: git -C host submodule update --init --recursive src/util
+      - name: Checkout this exact custom revision
+        uses: actions/checkout@v7.0.1
+        with:
+          path: host/src/custom
+          persist-credentials: false
+      - name: Install CPU dependencies
+        timeout-minutes: 8
+        run: |
+          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+            printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt > /dev/null
+          fi
+          apt_options=(-o Acquire::ForceIPv4=true -o Acquire::Retries=2 -o Acquire::https::Timeout=20 -o DPkg::Lock::Timeout=120)
+          sudo apt-get "${apt_options[@]}" update --error-on=any
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install -y --no-install-recommends cmake ninja-build g++ clang clang-tools pkg-config libcurl4-openssl-dev libssl-dev zlib1g-dev libopus-dev
+      - name: Configure public custom modules
+        run: cmake -S host -B host/build -G Ninja -DECHTERWACHTER_STRICT=ON -DECHTERWACHTER_CUDA=OFF -DGGE_SDK=OFF -DBUILD_TESTING=ON
+      - name: Build
+        run: cmake --build host/build --parallel 4
+      - name: Test
+        run: ctest --test-dir host/build --output-on-failure --no-tests=error
+# The private SDK adapter is built and tested by the SDK repository's own CI.
+# Public CI never requests private repository credentials.
